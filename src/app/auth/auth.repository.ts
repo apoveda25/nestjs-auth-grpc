@@ -6,19 +6,26 @@ import { ArangodbService } from '../../arangodb/arangodb.service';
 export class AuthRepository {
   constructor(private readonly arangoService: ArangodbService) {}
 
-  async searchUserScopes(userId: string) {
+  async searchUserRoleScopes(userId: string) {
+    const Users = this.arangoService.collection('Users');
     const UsersHasRole = this.arangoService.collection('UsersHasRole');
     const RolesHasScope = this.arangoService.collection('RolesHasScope');
 
     try {
       const cursor = await this.arangoService.query(aql`
-      FOR v_role, e_has_role IN OUTBOUND ${userId} ${UsersHasRole}
-      RETURN {
-        scopes: (
-          FOR v_scope, e_has_scope IN OUTBOUND v_role._id ${RolesHasScope}
-          RETURN v_scope
-        )
-      }
+        FOR user_v IN ${Users}
+        FILTER user_v._id == ${userId}
+        LET data = (
+            FOR role_v, has_role_e IN OUTBOUND user_v._id ${UsersHasRole}
+            RETURN {
+                role: role_v,
+                scopes: (
+                    FOR scope_v, has_scope_e IN OUTBOUND role_v._id ${RolesHasScope}
+                    RETURN scope_v
+                )
+            }
+        )[0]
+        RETURN MERGE(user_v, data)
     `);
 
       return await cursor.reduce((acc: any, cur: any) => cur || acc, null);
