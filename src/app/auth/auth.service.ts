@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { AuthRepository } from './auth.repository';
-import { SearchUserScopesDto } from './dto/search-user-scopes.dto';
+import { SearchUserRoleScopesDto } from './dto/search-user-role-scopes.dto';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly authRepository: AuthRepository) {}
 
-  async searchUserScopes(searchUserScopesDto: SearchUserScopesDto) {
-    return await this.authRepository.searchUserScopes(searchUserScopesDto._id);
+  async searchUserRoleScopes(searchUserRoleScopesDto: SearchUserRoleScopesDto) {
+    return await this.authRepository.searchUserRoleScopes(
+      searchUserRoleScopesDto._id,
+    );
   }
 }
